@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 struct list_head {
     struct list_head *next, *prev;
 };
@@ -8,7 +9,9 @@ struct list_head {
 
 #define LIST_POISON1	((void *)0xdeadbeef)
 #define LIST_POISON2	((void *)0xbadacafe)
+#define MAX_BUFFER 80
 
+unsigned int seed = 0xa200230;
 
 #define offsetof(TYPE, MEMBER)  ((size_t)&((TYPE *)0)->MEMBER)
 //부모 구조체접근.
@@ -54,7 +57,7 @@ LIST_HEAD(stack);
 
 struct entry {
 	struct list_head list;
-	int data;
+	char* string;
 };
 
 #define list_entry(ptr, type, member) \
@@ -96,35 +99,133 @@ static inline void list_del(struct list_head *entry)
 	entry->next = LIST_POISON1;
 	entry->prev = LIST_POISON2;
 }
+static char *generate_string(char *buffer)
+{
+	char *chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+	int len = 1 + random() % (MAX_BUFFER - 2);
+			/* +1 to prevent null string
+			 * -1 to consider \0 termination char
+			 */
+	int i;
+
+	for (i = 0; i < len; i++) {
+		buffer[i] = chars[random() % strlen(chars)];
+	}
+	buffer[len] = '\0';
+	return buffer;
+}
+
+void push_stack(char *string)
+{
+	/* TODO: Implement this function */
+	struct entry *new_entry = malloc(sizeof(struct entry)); //make new entry and copy string to new_entry's string
+	strcpy(new_entry->string,string);
+	INIT_LIST_HEAD(&new_entry->list); //initialize list
+
+	if(list_empty(&stack)) //시작상태일때, stack == stack->next
+	{
+		INIT_LIST_HEAD(&stack);
+	}
+	list_add(&(new_entry->list),&stack); //push
+	//x->prev  x->next  <---------
+}
+
+
+/**
+ * pop_stack()
+ *
+ * DESCRIPTION
+ *   Pop a value from @stack and return it through @buffer. The value should
+ *   come from the top of the stack, and the corresponding entry should be
+ *   removed from @stack.
+ *
+ * RETURN
+ *   If the stack is not empty, pop the top of @stack, and return 0
+ *   If the stack is empty, return -1
+ */
+int pop_stack(char *buffer)
+{
+	/* TODO: Implement this function */
+	if(list_empty(&stack)) //when stack is empty
+		return -1; /* Must fix to return a proper value when @stack is not empty */
+	else //pop the top of stack and return 0
+	{
+		struct entry *top = list_entry(stack.next,struct entry, list);
+		strcpy(buffer,top->string);
+		list_del(stack.next); //del entry
+		return 0;
+	}
+}
+
+
+/**
+ * dump_stack()
+ *
+ * DESCRIPTION
+ *   Dump the contents in @stack. Print out @string of stack entries while
+ *   traversing the stack from the bottom to the top. Note that the value
+ *   should be printed out to @stderr to get properly graded in pasubmit.
+ */
+void dump_stack(void)
+{
+	/* TODO: Implement this function */
+	struct list_head *ptr;
+	list_for_each(ptr,&stack){
+		struct entry *node; //stack전체를 위에서 부터 아래로 내려가면서 확인하는 메크로 결과값 : 76543210
+		node = list_entry(ptr,struct entry,list);
+		printf("%s\n",node->string);
+	}
+}
+
 
 int main(void)
 {
-    for(int i=0;i<8;i++)
-    {
-        struct entry *new_entry = malloc(sizeof(struct entry));
-        new_entry->data = i;
-		INIT_LIST_HEAD(&new_entry->list);
-		if(list_empty(&stack))
-		{
-			printf("empty\n");
-			INIT_LIST_HEAD(&stack);
-		}
-        list_add(&(new_entry->list),&stack);
-    }
+    
+    int ret;
+	char buffer[MAX_BUFFER];
+	unsigned int i;
 
-	//stack에 push 완료.
-	struct list_head *ptr;
-	struct entry *node;
-	//스택의 next를 없애기전에 여기있는 값을 구해야댐/
-	struct entry *d = list_entry(stack.next,struct entry, list);
-	printf("\n\n%d\n\n",d->data);
-	list_del(stack.next); //스택에서 제일 위에꺼 삭제하는 코드.
-	
+	srandom(seed);
 
-	list_for_each(ptr,&stack){ //stack전체를 위에서 부터 아래로 내려가면서 확인하는 메크로 결과값 : 76543210
-		node = list_entry(ptr,struct entry,list);
-		printf("%d\n",node->data);
+	/* Push 4 values */
+	for (i = 0; i < 4; i++) {
+		push_stack(generate_string(buffer));
+		printf("%s\n", buffer);
+	}
+	printf("\n");
+
+	/* Dump the current stack */
+	dump_stack();
+	printf("\n");
+
+	/* Pop 3 values */
+	for (i = 0; i < 3; i++) {
+		memset(buffer, 0x00, MAX_BUFFER);
+		pop_stack(buffer);
+		printf("%s\n", buffer);
+	}
+	printf("\n");
+
+	/* Dump the current stack */
+	dump_stack();
+	printf("\n");
+
+
+	/* And so on ..... */
+	for (i = 0; i < (1 << 12); i++) {
+		push_stack(generate_string(buffer));
+	}
+	for (i = 0; i < (1 << 12) - 8; i++) {
+		pop_stack(buffer);
 	}
 
+	dump_stack();
+	printf("\n");
+
+	/* Empty the stack by popping out all entries */
+	while ((ret = pop_stack(buffer)) >= 0) {
+		printf("%s\n", buffer);
+		memset(buffer, 0x00, MAX_BUFFER);
+	}
     
 }
