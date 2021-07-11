@@ -1,11 +1,13 @@
 import React, { createRef, PureComponent,useRef } from 'react';
+import Example2 from './Example2.jsx';
+
 
 class Example extends PureComponent{
 
   state = {
     id : '',
     password : '',
-    result : [],
+    result : '',
   };
 
   inputRef = createRef();
@@ -26,16 +28,30 @@ class Example extends PureComponent{
     e.preventDefault();
     this.setState((prevState)=>{
       return{
-        result : [...prevState.result,{id : this.state.id , password : this.state.password}] ,
+        result : this.state.id,
         id : '',
         password : '',
       }
     })
   }
 
-  renderResult = (params) =>{
-    return params.id.length < 5
-    ? <div>id : {params.id} , pwd : {params.password}</div>
+
+
+  renderLogin = () => {
+    return this.state.result === ''
+      ? <form onSubmit={this.onSubmitForm}>
+        <input onChange={this.onChangeInputID} value={this.state.id} type="text" placeholder = "ID"/>
+        <input onChange={this.onChangeInputPWD} value={this.state.password} placeholder = "PWD"/>
+        <button>버튼</button>
+      </form>
+      : null
+  }
+
+  
+
+  WritePost = () => {
+    return this.state.result !== ''
+    ? <Example2 id = {this.state.result}/>
     : null
   }
 
@@ -43,18 +59,8 @@ class Example extends PureComponent{
   {
     return(
       <>
-        <form onSubmit={this.onSubmitForm}>
-          <input onChange = {this.onChangeInputID} value = {this.state.id} type = "text"/>
-          <input onChange = {this.onChangeInputPWD} value = {this.state.password} />
-          <button>버튼</button>
-        </form>
-        {
-          this.state.result.map((value,index)=>{
-            return(
-              this.renderResult(value)
-            );
-          })
-        }
+        {this.renderLogin()}
+        {this.WritePost()}
       </>
     );
   }
