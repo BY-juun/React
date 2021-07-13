@@ -32,11 +32,13 @@ module.exports = {
     new ReactRefreshWebpackPlugin(),
   ],
   output: {
+    path: path.join(__dirname, 'dist'),
     filename: '[name].js',
+    publicPath: '/dist',
   },
   devServer: {
     publicPath: '/dist',
     hot: true,
-    port : 8888,
+    port : 8888.
   }
 };
