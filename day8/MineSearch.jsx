@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer, useCallback, memo, createContext, useMemo } from 'react';
+import React, { useEffect, useReducer, createContext, useMemo, memo } from 'react';
 import Table from './Table';
 import Form from './Form';
 
@@ -10,20 +10,27 @@ export const CODE = {
   QUESTION_MINE: -4,
   FLAG_MINE: -5,
   CLICKED_MINE: -6,
-  OPENED: 0,
-}
+  OPENED: 0, // 0 이상이면 다 opened
+};
 
-
-export const TableContext = createContext({ //이안에는 초기값
+export const TableContext = createContext({
   tableData: [],
-  dispatch: () => { }, //모양만 맞춰줌
+  halted: true,
+  dispatch: () => {},
 });
 
 const initialState = {
   tableData: [],
+  data: {
+    row: 0,
+    cell: 0,
+    mine: 0,
+  },
   timer: 0,
-  result: 0,
-}
+  result: '',
+  halted: true,
+  openedCount: 0,
+};
 
 const plantMine = (row, cell, mine) => {
   console.log(row, cell, mine);
@@ -53,7 +60,13 @@ const plantMine = (row, cell, mine) => {
   return data;
 }
 
-export const START_GAME = 'START_GAME'
+export const START_GAME = 'START_GAME';
+export const OPEN_CELL = 'OPEN_CELL';
+export const CLICK_MINE = 'CLICK_MINE';
+export const FLAG_CELL = 'FLAG_CELL';
+export const QUESTION_CELL = 'QUESTION_CELL';
+export const NORMALIZE_CELL = 'NORMALIZE_CELL';
+export const INCREMENT_TIMER = 'INCREMENT_TIMER';
 
 const reducer = (state, action) => {
   switch (action.type) {
